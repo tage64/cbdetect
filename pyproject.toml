@@ -11,6 +11,8 @@ fens = "cbdetect.gen_diagrams:main"
 [tool.poetry.dependencies]
 python = "^3.12"
 chess = "^1.10.0"
+fen2img = {path = "fen2img"}
+pillow = "^10.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -21,7 +23,11 @@ ruff = "^0.4.8"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pyright]
+exclude = ["fen2img/"]
+
 [tool.ruff]
+exclude = ["fen2img/"]
 line-length = 100
 
 [tool.ruff.format]
