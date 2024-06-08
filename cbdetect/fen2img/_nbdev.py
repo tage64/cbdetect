@@ -2,8 +2,7 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"load_svg": "00_fen2img.ipynb",
-         "fen2img": "00_fen2img.ipynb"}
+index = {"load_svg": "00_fen2img.ipynb", "fen2img": "00_fen2img.ipynb"}
 
 modules = ["fen2img.py"]
 
@@ -11,4 +10,6 @@ doc_url = "https://zilin.github.io/fen2img/"
 
 git_url = "https://github.com/zilin/fen2img/tree/master/"
 
-def custom_doc_links(name): return None
+
+def custom_doc_links(name):
+    return None

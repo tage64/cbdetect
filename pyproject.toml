@@ -7,12 +7,15 @@ readme = "README.md"
 
 [tool.poetry.scripts]
 fens = "cbdetect.gen_diagrams:main"
+gen_data = "cbdetect.gen_imgs:main"
 
 [tool.poetry.dependencies]
 python = "^3.12"
 chess = "^1.10.0"
-fen2img = {path = "fen2img"}
 pillow = "^10.3.0"
+progressbar2 = "^4.4.2"
+numpy = "^1.26.4"
+cairosvg = "^2.7.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -24,10 +27,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-exclude = ["fen2img/"]
 
 [tool.ruff]
-exclude = ["fen2img/"]
 line-length = 100
 
 [tool.ruff.format]

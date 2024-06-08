@@ -10,6 +10,7 @@ MAX_DIAGRAMS: int = 28929  # The number of positions in sample_games.pgn.
 
 
 def gen_diagrams(n: int = MAX_DIAGRAMS) -> Iterable[chess.Board]:
+    assert n <= MAX_DIAGRAMS, f"Can at most generate {MAX_DIAGRAMS} diagrams"
     i: int = 0
     with open(Path(__file__).parent / "sample_games.pgn") as f:
         while i < n and (game := chess.pgn.read_game(f)) is not None:
