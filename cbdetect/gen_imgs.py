@@ -2,83 +2,31 @@ import argparse
 import math
 import random
 import shutil
+from io import BytesIO
 from pathlib import Path
-from typing import Tuple
+from typing import IO, Tuple
 
 import chess
 import numpy as np
 import progressbar
+from cairosvg import svg2png
 from PIL import Image, ImageDraw
 from PIL.Image import Image as ImageTy
 
-from .fen2img.fen2img import fen2img  # type: ignore
+from .dirs import BOARD_IMGS_DIR, DATA_DIR, SQUARE_IMGS_DIR
 from .gen_diagrams import gen_diagrams
+from .utils import piece_str
 
-SQUARE_IMGS_OUTPUT_DIR: Path = Path("square_imgs")
-BOARD_IMGS_OUTPUT_DIR: Path = Path("boarde_imgs")
+BOARD_STYLES: list[Path] = [
+    b for b in (DATA_DIR / "board_styles").iterdir() if b.is_file() and b.suffix == ".svg"
+]
+PIECE_STYLES: list[Path] = [p for p in (DATA_DIR / "piece_styles").iterdir() if p.is_dir()]
+
 BOARD_IMG_SIZE: int = 400  # The size of the image of the board.
 # There will be randomly many, but at most this number of circles on a board:
 MAX_CIRCLES_PER_BOARD: int = 16
 # There will be randomly many, but at most this number of arrows on a board:
 MAX_ARROWS_PER_BOARD: int = 4
-PIECE_STYLES = [
-    "3d_chesskid",
-    "3d_plastic",
-    "3d_staunton",
-    "3d_wood",
-    "8_bit",
-    "alpha",
-    "bases",
-    "beyer",
-    "book",
-    "bubblegum",
-    "case",
-    "cases",
-    "chesscom",
-    "classic",
-    "club",
-    "condal",
-    "dash",
-    "game_room",
-    "glass",
-    "gothic",
-    "graffiti",
-    "icy_sea",
-    "leipzig",
-    "light",
-    "lolz",
-    "luca",
-    "marble",
-    "maya",
-    "merida",
-    "metal",
-    "modern",
-    "nature",
-    "neo",
-    "neon",
-    "neo_wood",
-    "newspaper",
-    "ocean",
-    "sky",
-    "space",
-    "tigers",
-    "tournament",
-    "uscf",
-    "vintage",
-    "wikipedia",
-    "wood",
-]
-BOARD_STYLES = [
-    "beyer",
-    "blue",
-    "brown",
-    "falken",
-    "green",
-    "informator",
-    "sportverlag",
-    "zeit",
-    "chesscom",
-]
 
 
 def main() -> None:
@@ -101,10 +49,10 @@ def main() -> None:
 
     no_boards: int = args.no_boards
 
-    shutil.rmtree(SQUARE_IMGS_OUTPUT_DIR, ignore_errors=True)
-    shutil.rmtree(BOARD_IMGS_OUTPUT_DIR, ignore_errors=True)
-    SQUARE_IMGS_OUTPUT_DIR.mkdir(parents=True)
-    BOARD_IMGS_OUTPUT_DIR.mkdir(parents=True)
+    shutil.rmtree(SQUARE_IMGS_DIR, ignore_errors=True)
+    shutil.rmtree(BOARD_IMGS_DIR, ignore_errors=True)
+    SQUARE_IMGS_DIR.mkdir(parents=True)
+    BOARD_IMGS_DIR.mkdir(parents=True)
 
     with progressbar.ProgressBar(
         min_value=0,
@@ -121,26 +69,37 @@ def main() -> None:
             board_style = random.choice(BOARD_STYLES)
             generate_imgs(board, board_style, piece_style, i)
             pro_bar.increment()
-    print(f"{no_boards} board images in {BOARD_IMGS_OUTPUT_DIR}/")
-    print(f"{no_boards * 64} square images in {SQUARE_IMGS_OUTPUT_DIR}/")
+    print(f"{no_boards} board images in {BOARD_IMGS_DIR}/")
+    print(f"{no_boards * 64} square images in {SQUARE_IMGS_DIR}/")
 
 
-def generate_imgs(board: chess.Board, board_style: str, piece_style: str, i: int) -> None:
-    image: ImageTy = fen2img(
-        board.fen().split(" ")[0],
-        board_size=BOARD_IMG_SIZE,
-        board_style=board_style,
-        boards_path=Path(__file__).parent / "fen2img" / "boards",
-        piece_style=piece_style,
-        pieces_path=Path(__file__).parent / "fen2img" / "pieces",
-    ).resize((BOARD_IMG_SIZE, BOARD_IMG_SIZE))
-    image = add_noise(image)
-    piece_imgs = split_squares(image, board)
+def generate_imgs(board: chess.Board, board_style: Path, piece_style: Path, i: int) -> None:
+    board_img = Image.open(load_svg(board_style, BOARD_IMG_SIZE, BOARD_IMG_SIZE))
+
+    piece_width, piece_height = BOARD_IMG_SIZE // 8, BOARD_IMG_SIZE // 8
+    for sq in chess.SQUARES:
+        if (piece := board.piece_at(sq)) is None:
+            continue
+        piece_file = piece_style / f"{piece_str(piece)}.png"
+        piece_img = Image.open(piece_file).convert("RGBA").resize((piece_width, piece_height))
+        board_img.paste(
+            piece_img,
+            (chess.square_file(sq) * piece_height, chess.square_rank(sq) * piece_width),
+            piece_img,
+        )
+    board_img = add_noise(board_img)
+    piece_imgs = split_squares(board_img, board)
     for class_, square, img in piece_imgs:
-        dir = SQUARE_IMGS_OUTPUT_DIR / class_
+        dir = SQUARE_IMGS_DIR / class_
         dir.mkdir(exist_ok=True)
         img.save(dir / f"{i}_{chess.SQUARE_NAMES[square]}.png")
-    image.save(BOARD_IMGS_OUTPUT_DIR / f"{i}.png")
+    board_img.save(BOARD_IMGS_DIR / f"{i}.png")
+
+
+def load_svg(svg_file: Path, width: int, height: int) -> IO[bytes]:
+    png = svg2png(url=str(svg_file), output_width=width, output_height=height)
+    assert isinstance(png, bytes)
+    return BytesIO(png)
 
 
 def add_noise(image: ImageTy) -> ImageTy:
