@@ -1,0 +1,6 @@
+{
+  "output_dir": "target/model",
+  "overwrite_output_dir": true,
+  "dataset_name": "target/board_imgs",
+  "ignore_mismatched_sizes": true
+}

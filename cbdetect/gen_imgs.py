@@ -17,7 +17,7 @@ from PIL.Image import Image as ImageTy
 
 from .dirs import BOARD_IMGS_DIR, DATA_DIR
 from .gen_diagrams import gen_diagrams
-from .utils import piece2id, piece_str
+from .utils import piece2id, piece2str
 
 BOARD_STYLES: list[Path] = [
     b for b in (DATA_DIR / "board_styles").iterdir() if b.is_file() and b.suffix == ".svg"
@@ -37,7 +37,7 @@ class Objects:
 
     # For each object (x, y, width, height).
     bbox: list[Tuple[int, int, int, int]]
-    category: list[int]
+    categories: list[int]
 
 
 @dataclass
@@ -136,12 +136,12 @@ def generate_img(board: chess.Board, board_style: Path, piece_style: Path) -> Bo
     piece_width, piece_height = BOARD_IMG_SIZE // 8, BOARD_IMG_SIZE // 8
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        objs.category.append(piece2id(piece))
+        objs.categories.append(piece2id(piece))
         x, y = chess.square_file(sq) * piece_width, (7 - chess.square_rank(sq)) * piece_height
         objs.bbox.append((x, y, piece_width, piece_height))
         if piece is None:
             continue
-        piece_img_file = piece_style / f"{piece_str(piece)}.png"
+        piece_img_file = piece_style / f"{piece2str(piece)}.png"
         piece_img = Image.open(piece_img_file).convert("RGBA").resize((piece_width, piece_height))
         board_img.paste(piece_img, (x, y), piece_img)
     board_img = add_noise(board_img)
