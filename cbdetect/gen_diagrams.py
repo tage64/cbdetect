@@ -1,6 +1,6 @@
 """Get chess diagrams from real games."""
 
-from typing import Iterable
+from collections.abc import Iterator
 
 import chess
 import chess.pgn
@@ -10,7 +10,7 @@ from .dirs import DATA_DIR
 MAX_DIAGRAMS: int = 28929  # The number of positions in sample_games.pgn.
 
 
-def gen_diagrams(n: int = MAX_DIAGRAMS) -> Iterable[chess.Board]:
+def gen_diagrams(n: int = MAX_DIAGRAMS) -> Iterator[chess.Board]:
     assert n <= MAX_DIAGRAMS, f"Can at most generate {MAX_DIAGRAMS} diagrams"
     i: int = 0
     with open(DATA_DIR / "sample_games.pgn") as f:

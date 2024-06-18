@@ -1,7 +1,9 @@
 import argparse
+import json
 import math
 import random
 import shutil
+from dataclasses import asdict, dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import IO, Tuple
@@ -13,9 +15,9 @@ from cairosvg import svg2png
 from PIL import Image, ImageDraw
 from PIL.Image import Image as ImageTy
 
-from .dirs import BOARD_IMGS_DIR, DATA_DIR, SQUARE_IMGS_DIR
+from .dirs import BOARD_IMGS_DIR, DATA_DIR
 from .gen_diagrams import gen_diagrams
-from .utils import piece_str
+from .utils import piece2id, piece_str
 
 BOARD_STYLES: list[Path] = [
     b for b in (DATA_DIR / "board_styles").iterdir() if b.is_file() and b.suffix == ".svg"
@@ -29,6 +31,31 @@ MAX_CIRCLES_PER_BOARD: int = 16
 MAX_ARROWS_PER_BOARD: int = 4
 
 
+@dataclass
+class Objects:
+    """Metadata about objects in an image."""
+
+    # For each object (x, y, width, height).
+    bbox: list[Tuple[int, int, int, int]]
+    categories: list[int]
+
+
+@dataclass
+class BoardImg:
+    """A class for a board image with metadata."""
+
+    img: ImageTy
+    objects: Objects
+
+
+@dataclass
+class ImgMetadata:
+    """Metadata about an image."""
+
+    file_name: str
+    objects: Objects
+
+
 def main() -> None:
     argparser = argparse.ArgumentParser(
         description="Generate a whole bunch of chess squares with different types "
@@ -36,24 +63,37 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     argparser.add_argument("--seed", type=int, default=42, help="Random initial seed.")
+    argparser.add_argument("no_boards", type=int, default=4096, help="Number of boards to produce.")
     argparser.add_argument(
-        "no_boards",
+        "-t",
+        "--test-percentage",
         type=int,
-        default=4096,
-        help="Number of boards to produce, note that the number of squares may be 64 times higher.",
+        default=20,
+        help="Percentage of images used for testing.",
+    )
+    argparser.add_argument(
+        "-v",
+        "--valid-percentage",
+        type=int,
+        default=20,
+        help="Percentage of images used for validation.",
     )
     args = argparser.parse_args()
     random.seed(args.seed)
 
+    no_boards: int = args.no_boards
+    test_percentage, valid_percentage = args.test_percentage, args.valid_percentage
+    assert test_percentage + valid_percentage <= 100
+    assert test_percentage >= 0 and valid_percentage >= 0
+    no_test_imgs: int = round(no_boards / test_percentage)
+    no_valid_imgs: int = round(no_boards / valid_percentage)
+    no_train_imgs: int = no_boards - no_test_imgs - no_valid_imgs
+
     print(f"{len(PIECE_STYLES)} piece styles and {len(BOARD_STYLES)} board styles.")
 
-    no_boards: int = args.no_boards
-
-    shutil.rmtree(SQUARE_IMGS_DIR, ignore_errors=True)
     shutil.rmtree(BOARD_IMGS_DIR, ignore_errors=True)
-    SQUARE_IMGS_DIR.mkdir(parents=True)
-    BOARD_IMGS_DIR.mkdir(parents=True)
 
+    board_iter = gen_diagrams(no_boards)
     with progressbar.ProgressBar(
         min_value=0,
         max_value=no_boards,
@@ -63,37 +103,49 @@ def main() -> None:
             progressbar.Bar(marker="=", left="[", right="]"),
         ],
     ) as pro_bar:
-        for i, board in enumerate(gen_diagrams(no_boards), start=1):
-            # Select a random piece and board style:
-            piece_style = random.choice(PIECE_STYLES)
-            board_style = random.choice(BOARD_STYLES)
-            generate_imgs(board, board_style, piece_style, i)
-            pro_bar.increment()
+        for purpose, n in [
+            ("train", no_train_imgs),
+            ("test", no_test_imgs),
+            ("valid", no_valid_imgs),
+        ]:
+            dir = BOARD_IMGS_DIR / purpose
+            dir.mkdir(parents=True)
+
+            metadata: list[ImgMetadata] = []
+            for i in range(n):
+                board = next(board_iter)
+                # Select a random piece and board style:
+                piece_style = random.choice(PIECE_STYLES)
+                board_style = random.choice(BOARD_STYLES)
+                board_img = generate_img(board, board_style, piece_style)
+                file_name = f"{i}.png"
+                img_file = dir / file_name
+                board_img.img.save(img_file)
+                metadata.append(ImgMetadata(file_name, board_img.objects))
+                pro_bar.increment()
+            with open(dir / "metadata.jsonl", "w") as f:
+                json.dump([asdict(m) for m in metadata], f, indent=2)
     print(f"{no_boards} board images in {BOARD_IMGS_DIR}/")
-    print(f"{no_boards * 64} square images in {SQUARE_IMGS_DIR}/")
 
 
-def generate_imgs(board: chess.Board, board_style: Path, piece_style: Path, i: int) -> None:
+def generate_img(board: chess.Board, board_style: Path, piece_style: Path) -> BoardImg:
+    objs = Objects([], [])
+
     board_img = Image.open(load_svg(board_style, BOARD_IMG_SIZE, BOARD_IMG_SIZE))
 
     piece_width, piece_height = BOARD_IMG_SIZE // 8, BOARD_IMG_SIZE // 8
     for sq in chess.SQUARES:
-        if (piece := board.piece_at(sq)) is None:
+        piece = board.piece_at(sq)
+        objs.categories.append(piece2id(piece))
+        x, y = chess.square_file(sq) * piece_width, (7 - chess.square_rank(sq)) * piece_height
+        objs.bbox.append((x, y, piece_width, piece_height))
+        if piece is None:
             continue
-        piece_file = piece_style / f"{piece_str(piece)}.png"
-        piece_img = Image.open(piece_file).convert("RGBA").resize((piece_width, piece_height))
-        board_img.paste(
-            piece_img,
-            (chess.square_file(sq) * piece_height, chess.square_rank(sq) * piece_width),
-            piece_img,
-        )
+        piece_img_file = piece_style / f"{piece_str(piece)}.png"
+        piece_img = Image.open(piece_img_file).convert("RGBA").resize((piece_width, piece_height))
+        board_img.paste(piece_img, (x, y), piece_img)
     board_img = add_noise(board_img)
-    piece_imgs = split_squares(board_img, board)
-    for class_, square, img in piece_imgs:
-        dir = SQUARE_IMGS_DIR / class_
-        dir.mkdir(exist_ok=True)
-        img.save(dir / f"{i}_{chess.SQUARE_NAMES[square]}.png")
-    board_img.save(BOARD_IMGS_DIR / f"{i}.png")
+    return BoardImg(board_img, objs)
 
 
 def load_svg(svg_file: Path, width: int, height: int) -> IO[bytes]:
