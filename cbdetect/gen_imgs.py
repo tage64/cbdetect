@@ -37,7 +37,7 @@ class Objects:
 
     # For each object (x, y, width, height).
     bbox: list[Tuple[int, int, int, int]]
-    categories: list[int]
+    category: list[int]
 
 
 @dataclass
@@ -106,25 +106,25 @@ def main() -> None:
         for purpose, n in [
             ("train", no_train_imgs),
             ("test", no_test_imgs),
-            ("valid", no_valid_imgs),
+            ("validation", no_valid_imgs),
         ]:
             dir = BOARD_IMGS_DIR / purpose
             dir.mkdir(parents=True)
 
-            metadata: list[ImgMetadata] = []
-            for i in range(n):
-                board = next(board_iter)
-                # Select a random piece and board style:
-                piece_style = random.choice(PIECE_STYLES)
-                board_style = random.choice(BOARD_STYLES)
-                board_img = generate_img(board, board_style, piece_style)
-                file_name = f"{i}.png"
-                img_file = dir / file_name
-                board_img.img.save(img_file)
-                metadata.append(ImgMetadata(file_name, board_img.objects))
-                pro_bar.increment()
-            with open(dir / "metadata.jsonl", "w") as f:
-                json.dump([asdict(m) for m in metadata], f, indent=2)
+            with open(dir / "metadata.jsonl", "w") as metadata_file:
+                for i in range(n):
+                    board = next(board_iter)
+                    # Select a random piece and board style:
+                    piece_style = random.choice(PIECE_STYLES)
+                    board_style = random.choice(BOARD_STYLES)
+                    board_img = generate_img(board, board_style, piece_style)
+                    file_name = f"{i}.png"
+                    img_file = dir / file_name
+                    board_img.img.save(img_file)
+                    metadata = ImgMetadata(file_name, board_img.objects)
+                    json.dump(asdict(metadata), metadata_file)
+                    metadata_file.write("\n")
+                    pro_bar.increment()
     print(f"{no_boards} board images in {BOARD_IMGS_DIR}/")
 
 
@@ -136,7 +136,7 @@ def generate_img(board: chess.Board, board_style: Path, piece_style: Path) -> Bo
     piece_width, piece_height = BOARD_IMG_SIZE // 8, BOARD_IMG_SIZE // 8
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        objs.categories.append(piece2id(piece))
+        objs.category.append(piece2id(piece))
         x, y = chess.square_file(sq) * piece_width, (7 - chess.square_rank(sq)) * piece_height
         objs.bbox.append((x, y, piece_width, piece_height))
         if piece is None:
