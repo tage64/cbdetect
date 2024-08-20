@@ -58,8 +58,7 @@ class ImgMetadata:
 
 def main() -> None:
     argparser = argparse.ArgumentParser(
-        description="Generate a whole bunch of chess squares with different types "
-        "of pieces or empty.",
+        description="Generate images of chess boards with different piece configurations.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     argparser.add_argument("--seed", type=int, default=42, help="Random initial seed.")
@@ -85,8 +84,8 @@ def main() -> None:
     test_percentage, valid_percentage = args.test_percentage, args.valid_percentage
     assert test_percentage + valid_percentage <= 100
     assert test_percentage >= 0 and valid_percentage >= 0
-    no_test_imgs: int = round(no_boards / test_percentage)
-    no_valid_imgs: int = round(no_boards / valid_percentage)
+    no_test_imgs: int = round(no_boards * test_percentage / 100)
+    no_valid_imgs: int = round(no_boards * valid_percentage / 100)
     no_train_imgs: int = no_boards - no_test_imgs - no_valid_imgs
 
     print(f"{len(PIECE_STYLES)} piece styles and {len(BOARD_STYLES)} board styles.")
