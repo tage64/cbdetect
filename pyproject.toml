@@ -13,31 +13,32 @@ train = "cbdetect.train_model:main"
 [tool.poetry.dependencies]
 python = "^3.12"
 chess = "^1.10.0"
-pillow = "^10.3.0"
+pillow = "^10.4.0"
 progressbar2 = "^4.4.2"
 numpy = "^1.26.4"
 cairosvg = "^2.7.1"
-albumentations = "^1.4.8"
-torchmetrics = "^1.4.0.post0"
-datasets = "^2.20.0"
-timm = "^1.0.3"
+albumentations = "^1.4.14"
+torchmetrics = "^1.4.1"
+datasets = "^2.21.0"
+timm = "^1.0.8"
 pycocotools = "^2.0.8"
 transformers = {git = "https://github.com/huggingface/transformers", extras = ["torch"]}
 
 
 [tool.poetry.group.dev.dependencies]
-pyright = "^1.1.366"
-ruff = "^0.4.8"
+pyright = "^1.1.376"
+ruff = "^0.6.1"
+pre-commit = "^3.8.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-exclude = ["cbdetect/run_object_detection.py"]
+exclude = ["cbdetect/train_model.py"]
 
 [tool.ruff]
-exclude = ["cbdetect/run_object_detection.py"]
+exclude = ["cbdetect/train_model.py"]
 line-length = 100
 
 [tool.ruff.format]
