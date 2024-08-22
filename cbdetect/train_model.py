@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # coding=utf-8
+# Copied from transformers/examples/pytorch/object-detection/run_object_detection.py at main · huggingface/transformers
 # Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,12 +45,11 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
-import cbdetect.utils
 
 logger = logging.getLogger(__name__)
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.42.0.dev0")
+check_min_version("4.45.0.dev0")
 
 require_version("datasets>=2.0.0", "To fix: pip install -r examples/pytorch/object-detection/requirements.txt")
 
@@ -395,9 +396,8 @@ def main():
         dataset["validation"] = split["test"]
 
     # Get dataset categories and prepare mappings for label_name <-> label_id
-    #categories = dataset["train"].features["objects"].feature["category"].names
-    #id2label = dict(enumerate(categories))
-    id2label = cbdetect.utils.id2label
+    categories = dataset["train"].features["objects"].feature["category"].names
+    id2label = dict(enumerate(categories))
     label2id = {v: k for k, v in id2label.items()}
 
     # ------------------------------------------------------------------------------------------------

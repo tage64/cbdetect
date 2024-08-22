@@ -26,7 +26,7 @@ transformers = {git = "https://github.com/huggingface/transformers", extras = ["
 
 
 [tool.poetry.group.dev.dependencies]
-pyright = "^1.1.376"
+pyright = "^1.1.377"
 ruff = "^0.6.1"
 pre-commit = "^3.8.0"
 
