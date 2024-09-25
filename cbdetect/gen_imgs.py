@@ -37,7 +37,8 @@ class Objects:
 
     # For each object (x, y, width, height).
     bbox: list[Tuple[int, int, int, int]]
-    categories: list[int]
+    category: list[int]
+    area: list[int]
 
 
 @dataclass
@@ -54,6 +55,7 @@ class ImgMetadata:
 
     file_name: str
     objects: Objects
+    image_id: int
 
 
 def main() -> None:
@@ -102,6 +104,7 @@ def main() -> None:
             progressbar.Bar(marker="=", left="[", right="]"),
         ],
     ) as pro_bar:
+        image_count: int = 0
         for purpose, n in [
             ("train", no_train_imgs),
             ("test", no_test_imgs),
@@ -120,24 +123,26 @@ def main() -> None:
                     file_name = f"{i}.png"
                     img_file = dir / file_name
                     board_img.img.save(img_file)
-                    metadata = ImgMetadata(file_name, board_img.objects)
+                    metadata = ImgMetadata(file_name, board_img.objects, image_id=image_count)
                     json.dump(asdict(metadata), metadata_file)
                     metadata_file.write("\n")
+                    image_count += 1
                     pro_bar.increment()
     print(f"{no_boards} board images in {BOARD_IMGS_DIR}/")
 
 
 def generate_img(board: chess.Board, board_style: Path, piece_style: Path) -> BoardImg:
-    objs = Objects([], [])
+    objs = Objects([], [], [])
 
     board_img = Image.open(load_svg(board_style, BOARD_IMG_SIZE, BOARD_IMG_SIZE))
 
     piece_width, piece_height = BOARD_IMG_SIZE // 8, BOARD_IMG_SIZE // 8
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        objs.categories.append(piece2id(piece))
+        objs.category.append(piece2id(piece))
         x, y = chess.square_file(sq) * piece_width, (7 - chess.square_rank(sq)) * piece_height
         objs.bbox.append((x, y, piece_width, piece_height))
+        objs.area.append(piece_width * piece_height)
         if piece is None:
             continue
         piece_img_file = piece_style / f"{piece2str(piece)}.png"

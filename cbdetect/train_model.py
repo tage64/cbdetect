@@ -396,8 +396,11 @@ def main():
         dataset["validation"] = split["test"]
 
     # Get dataset categories and prepare mappings for label_name <-> label_id
-    categories = dataset["train"].features["objects"].feature["category"].names
-    id2label = dict(enumerate(categories))
+    #categories = dataset["train"].features["objects"].feature["category"].names
+    #id2label = dict(enumerate(categories))
+    from .utils import piece2id, piece2str, PIECES
+    id2label = {piece2id(p): piece2str(p) for p in PIECES + [None]}
+    assert len(id2label) == 13
     label2id = {v: k for k, v in id2label.items()}
 
     # ------------------------------------------------------------------------------------------------

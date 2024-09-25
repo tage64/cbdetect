@@ -1,5 +1,12 @@
 import chess
 
+# All chess pieces.
+PIECES: list[chess.Piece] = [
+    chess.Piece(color=c, piece_type=p)
+    for c in (chess.WHITE, chess.BLACK)
+    for p in [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN, chess.KING]
+]
+
 
 def piece2str(piece: chess.Piece | None) -> str:
     """Convert a chess piece to a two letter identifier, or None to "empty"."""
