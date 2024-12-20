@@ -40,6 +40,7 @@ markdown = "^3.7"
 pyright = "^1.1.391"
 ruff = "^0.6.1"
 pre-commit = "^3.8.0"
+nuitka = "^2.5.7"
 
 [build-system]
 requires = ["poetry-core"]
