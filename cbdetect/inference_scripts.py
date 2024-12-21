@@ -437,8 +437,8 @@ def pdf_script() -> None:
             return
         fname: str = tkinter.filedialog.askopenfilename(
             title="PDF File",
-            filetypes=[("Chess Files", "*.pgn;*.fen"), ("All Files", "*")],
-            defaultextension=".pgn",
+            filetypes=[("PDF Files", "*.pdf"), ("All Files", "*")],
+            defaultextension=".pdf",
         )
         if not fname or not isinstance(fname, str):
             print("No file selected.")
