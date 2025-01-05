@@ -447,12 +447,14 @@ def pdf_script() -> None:
         pdf_file_name = Path(fname)
 
     pdf: fitz.Document = fitz.open(pdf_file_name)
+    LOGGER.info(f"Successfully opened {pdf_file_name}")
     markdown_document: str = ""
     cb_detector = ChessBoardDetection()
     for page in pdf:
         # page.get_pixmap().save(f"imgs/page_{page.number}.png")
-        if args.page is not None and not page.number == args.page:
+        if args.page is not None and not page.number + 1 == args.page:
             continue
+        LOGGER.info(f"Analyzing page {page.number+1}")
         images = page.get_images(full=True)
         boards: list[chess.Board] = []
         for img in images:
@@ -469,7 +471,7 @@ def pdf_script() -> None:
                 boards.append(board)
         markdown_page: str = pymupdf4llm.to_markdown(pdf, pages=[page.number], show_progress=False)
         if boards:
-            print(f"Found {len(boards)} chess boards at page {page.number}.")
+            LOGGER.info(f"Found {len(boards)} chess boards at page {page.number}.")
             boards_description: str = "--------\n"
             boards_description += (
                 f"It seems to be {len(boards)} chess boards displayed on this image:\n\n"
@@ -483,6 +485,7 @@ def pdf_script() -> None:
     out_file_name: Path = pdf_file_name.with_suffix(".html")
     with open(out_file_name, "w") as f:
         f.write(html)
+        LOGGER.info(f"Successfully wrote {out_file_name}")
 
 
 def show_pieces_on_board(board: chess.Board) -> str:

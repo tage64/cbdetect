@@ -6,13 +6,13 @@ authors = ["Tage Johansson <tajo9185@student.uu.se>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-fens = "cbdetect.gen_diagrams:main"
-gen_data = "cbdetect.gen_imgs:main"
-train = "cbdetect.train_model:main"
-square = "cbdetect.inference_scripts:single_square_script"
-board = "cbdetect.inference_scripts:single_board_script"
-video = "cbdetect.inference_scripts:video_script"
-pdf = "cbdetect.inference_scripts:pdf_script"
+chess-pdf = "cbdetect.inference_scripts:pdf_script"
+#fens = "cbdetect.gen_diagrams:main"
+#gen_data = "cbdetect.gen_imgs:main"
+#train = "cbdetect.train_model:main"
+#square = "cbdetect.inference_scripts:single_square_script"
+#board = "cbdetect.inference_scripts:single_board_script"
+#video = "cbdetect.inference_scripts:video_script"
 
 [tool.poetry.dependencies]
 python = ">=3.12, <3.14"
@@ -39,7 +39,6 @@ markdown = "^3.7"
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.391"
 ruff = "^0.6.1"
-pyinstaller = "^6.11.1"
 
 [build-system]
 requires = ["poetry-core"]
