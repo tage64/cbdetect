@@ -15,7 +15,7 @@ video = "cbdetect.inference_scripts:video_script"
 pdf = "cbdetect.inference_scripts:pdf_script"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12, <3.14"
 chess = "^1.11.1"
 pillow = "^10.4.0"
 opencv-python = "^4.10.0.84"
@@ -39,8 +39,7 @@ markdown = "^3.7"
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.391"
 ruff = "^0.6.1"
-pre-commit = "^3.8.0"
-nuitka = "^2.5.7"
+pyinstaller = "^6.11.1"
 
 [build-system]
 requires = ["poetry-core"]
