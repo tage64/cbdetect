@@ -471,7 +471,7 @@ def pdf_script() -> None:
                 boards.append(board)
         markdown_page: str = pymupdf4llm.to_markdown(pdf, pages=[page.number], show_progress=False)
         if boards:
-            LOGGER.info(f"Found {len(boards)} chess boards at page {page.number}.")
+            LOGGER.info(f"Found {len(boards)} chess boards at page {page.number + 1}.")
             boards_description: str = "--------\n"
             boards_description += (
                 f"It seems to be {len(boards)} chess boards displayed on this image:\n\n"
